@@ -1,5 +1,7 @@
 # OpenGL streaming
 
+## used firebase studio to attempt to add missing gles impimentations
+
 This software provides an implementation of the EGL and GLES2 APIs,
 which forwards an application's (client-side) graphics calls to a
 remote (server-side) EGL/GLES2 implementation, which typically renders
