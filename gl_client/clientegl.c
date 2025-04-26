@@ -18,6 +18,10 @@
   __asm__(".global " #FUNC "; .set " #FUNC ", __GLS_"#FUNC);            \
   static EGLAPI RET EGLAPIENTRY __GLS_##FUNC (__VA_ARGS__)
 
+// send information about local window so server can recreate it
+static EGLint gls_request_window(NativeWindowType window);
+
+
 static struct
 {
   EGLNativeDisplayType native_display;
@@ -119,17 +123,17 @@ GLS_DEF_CORE_API(EGLSurface, eglCreatePbufferSurface,  EGLDisplay dpy, EGLConfig
 
 GLS_DEF_CORE_API(EGLSurface, eglCreatePixmapSurface,  EGLDisplay dpy, EGLConfig config, NativePixmapType pixmap, const EGLint* attrib_list )
 {
-#if 0
-  SEND_ATTRIB_DATA(has_attribs, attrib_list);
-  GLS_SET_COMMAND_PTR(c, eglCreatePixmapSurface);
-  c->has_attribs = has_attribs;
-  c->dpy = (uint64_t)dpy;
-  c->config = (uint64_t)config;
-  //c->pixmap = pixmap; // FIXME must transfer Pixmap first
-  GLS_SEND_PACKET(eglCreatePixmapSurface);
-
-  GLS_WAIT_SET_RET_PTR(ret, eglCreatePixmapSurface);
-  GLS_RELEASE_RETURN_RET(EGLSurface, ret, surface);
+#if 1
+  SEND_ATTRIB_DATA(has_attribs, attrib_list);\
+  GLS_SET_COMMAND_PTR(c, eglCreatePixmapSurface);\
+  c->has_attribs = has_attribs;\
+  c->dpy = (uint64_t)dpy;\
+  c->config = (uint64_t)config;\
+  //c->pixmap = pixmap; // FIXME must transfer Pixmap first\
+  GLS_SEND_PACKET(eglCreatePixmapSurface);\
+\
+  GLS_WAIT_SET_RET_PTR(ret, eglCreatePixmapSurface);\
+  GLS_RELEASE_RETURN_RET(EGLSurface, ret, surface);\
 #else
   (void)dpy; (void)config; (void)pixmap; (void)attrib_list; // FIXME stub
   WARN_STUBBED();
@@ -138,7 +142,7 @@ GLS_DEF_CORE_API(EGLSurface, eglCreatePixmapSurface,  EGLDisplay dpy, EGLConfig 
 #endif
 }
 
-// send information about local window so server can recreate it
+
 static EGLint gls_request_window(NativeWindowType window)
 {
 #if defined(USE_X11)

@@ -167,15 +167,21 @@ GLS_DEF_CORE_API(void, glBindTexture, GLenum target, GLuint texture)
 
 GLS_DEF_CORE_API(void, glBlendColor, GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha)
 {
-  (void)red; (void)green; (void)blue; (void)alpha;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glBlendColor);
+  c->red = red;
+  c->green = green;
+  c->blue = blue;
+  c->alpha = alpha;
+  GLS_SEND_PACKET(glBlendColor);
 }
 
 
 GLS_DEF_CORE_API(void, glBlendEquation,  GLenum mode )
 {
-  (void)mode;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glBlendEquation);
+  c->mode = mode;
+  GLS_SEND_PACKET(glBlendEquation);
+
 }
 
 
@@ -301,24 +307,47 @@ GLS_DEF_CORE_API(void, glCompileShader, GLuint shader)
 
 GLS_DEF_CORE_API(void, glCompressedTexImage2D, GLenum target, GLint level, GLenum internalformat, GLsizei width, GLsizei height, GLint border, GLsizei imageSize, const GLvoid* data)
 {
-  (void) target; (void) level; (void) internalformat; (void) width; (void) height;
-  (void) border; (void) imageSize; (void) data;
-  WARN_STUBBED();
+  if (data)
+    gls_cmd_send_data((uint32_t)imageSize, (void*)data);
+  GLS_SET_COMMAND_PTR(c, glCompressedTexImage2D);
+  c->target = target;
+  c->level = level;
+  c->internalformat = internalformat;
+  c->width = width;
+  c->height = height;
+  c->border = border;
+  c->imageSize = imageSize;
+  c->has_data = (data != NULL);
+  GLS_SEND_PACKET(glCompressedTexImage2D);
 }
 
 GLS_DEF_CORE_API(void, glCompressedTexSubImage2D, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const GLvoid* data)
 {
-  (void) target; (void) level; (void) xoffset; (void)yoffset; (void) width; (void) height;
-  (void) format; (void) imageSize; (void) data;
-  WARN_STUBBED();
-}
+  if (data)
+    gls_cmd_send_data((uint32_t)imageSize, (void*)data);
+  GLS_SET_COMMAND_PTR(c, glCompressedTexSubImage2D);
+  c->target = target;
+  c->level = level;
+  c->xoffset = xoffset;
+  c->yoffset = yoffset;
+  c->width = width;
+  c->height = height;
+  c->format = format;
+  c->imageSize = imageSize;
+  c->has_data = (data != NULL);
+  GLS_SEND_PACKET(glCompressedTexSubImage2D);}
 
 
 GLS_DEF_CORE_API(void, glCopyTexImage2D, GLenum target, GLint level, GLenum internalformat, GLint x, GLint y, GLsizei width, GLsizei height, GLint border)
 {
-  (void) target; (void) level; (void) internalformat; (void) x; (void) y;
-  (void) width; (void) height; (void) border;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glCopyTexImage2D);
+  c->target = target;
+  c->level = level;
+  c->internalformat = internalformat;
+  c->x = x;
+  c->y = y;
+  c->width = width;
+  c->height = height; c->border = border; GLS_SEND_PACKET(glCopyTexImage2D);
 }
 
 
@@ -459,8 +488,10 @@ GLS_DEF_CORE_API(void, glDepthRangef, GLclampf zNear, GLclampf zFar)
 
 GLS_DEF_CORE_API(void, glDetachShader, GLuint program, GLuint shader)
 {
-  (void)program; (void)shader;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glDetachShader);
+  c->program = program;
+  c->shader = shader;
+  GLS_SEND_PACKET(glDetachShader);
 }
 
 
@@ -638,9 +669,9 @@ GLS_DEF_CORE_API(void, glEnableVertexAttribArray, GLuint index)
 
 GLS_DEF_CORE_API(void, glFinish, void)
 {
-  WARN_STUBBED(); // wrong semantics
   GLS_SET_COMMAND_PTR(c, glFinish);
   GLS_SEND_PACKET(glFinish);
+  GLS_WAIT_NORET(glFinish);
 }
 
 
@@ -675,8 +706,9 @@ GLS_DEF_CORE_API(void, glFramebufferTexture2D, GLenum target, GLenum attachment,
 
 GLS_DEF_CORE_API(void, glFrontFace, GLenum mode)
 {
-  (void)mode;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glFrontFace);
+  c->mode = mode;
+  GLS_SEND_PACKET(glFrontFace);
 }
 
 
@@ -801,8 +833,13 @@ GLS_DEF_CORE_API(void, glGetActiveUniform, GLuint program, GLuint index, GLsizei
 
 GLS_DEF_CORE_API(void, glGetAttachedShaders, GLuint program, GLsizei maxcount, GLsizei* count, GLuint* shaders)
 {
-  (void)program; (void)maxcount; (void)count; (void)shaders;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetAttachedShaders);
+  c->program = program;
+  c->maxcount = maxcount;
+  GLS_SEND_PACKET(glGetAttachedShaders);
+  GLS_WAIT_SET_RET_PTR(ret, glGetAttachedShaders);
+  if(count)*count = ret->count; if(shaders) memcpy(shaders, ret->shaders, ret->count * sizeof(GLuint));
+  GLS_RELEASE_RET();
 }
 
 
@@ -825,15 +862,24 @@ GLS_DEF_CORE_API(GLint, glGetAttribLocation, GLuint program, const GLchar* name)
 
 GLS_DEF_CORE_API(void, glGetBooleanv, GLenum pname, GLboolean* params)
 {
-  (void)pname; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetBooleanv);
+  c->pname = pname;
+  GLS_SEND_PACKET(glGetBooleanv);
+  GLS_WAIT_SET_RET_PTR(ret, glGetBooleanv);
+  *params = ret->params;
+  GLS_RELEASE_RET();
 }
 
 
 GLS_DEF_CORE_API(void, glGetBufferParameteriv, GLenum target, GLenum pname, GLint* params)
 {
-  (void)target; (void)pname; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetBufferParameteriv);
+  c->target = target;
+  c->pname = pname;
+  GLS_SEND_PACKET(glGetBufferParameteriv);
+  GLS_WAIT_SET_RET_PTR(ret, glGetBufferParameteriv);
+  *params = ret->params;
+  GLS_RELEASE_RET();
 }
 
 
@@ -864,8 +910,12 @@ GLS_DEF_CORE_API(void, glGetFloatv, GLenum name, GLfloat* params)
 
 GLS_DEF_CORE_API(void, glGetFramebufferAttachmentParameteriv, GLenum target, GLenum attachment, GLenum pname, GLint* params)
 {
-  (void)target; (void)attachment; (void)pname; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetFramebufferAttachmentParameteriv);
+  c->target = target;
+  c->attachment = attachment;
+  c->pname = pname;
+  GLS_SEND_PACKET(glGetFramebufferAttachmentParameteriv);
+  GLS_WAIT_SET_RET_PTR(ret, glGetFramebufferAttachmentParameteriv); *params = ret->params; GLS_RELEASE_RET();
 }
 
 
@@ -918,8 +968,14 @@ GLS_DEF_CORE_API(void, glGetProgramInfoLog, GLuint program, GLsizei bufsize, GLs
 
 GLS_DEF_CORE_API(void, glGetRenderbufferParameteriv, GLenum target, GLenum pname, GLint* params)
 {
-  (void)target; (void)pname; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetRenderbufferParameteriv);
+  c->target = target;
+  c->pname = pname;
+  GLS_SEND_PACKET(glGetRenderbufferParameteriv);
+
+  GLS_WAIT_SET_RET_PTR(ret, glGetRenderbufferParameteriv);
+  *params = ret->params;
+  GLS_RELEASE_RET();
 }
 
 
@@ -959,15 +1015,43 @@ GLS_DEF_CORE_API(void, glGetShaderInfoLog, GLuint shader, GLsizei bufsize, GLsiz
 
 GLS_DEF_CORE_API(void, glGetShaderPrecisionFormat, GLenum shadertype, GLenum precisiontype, GLint* range, GLint* precision)
 {
-  (void)shadertype; (void)precisiontype; (void)range; (void)precision;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetShaderPrecisionFormat);
+  c->shadertype = shadertype;
+  c->precisiontype = precisiontype;
+  GLS_SEND_PACKET(glGetShaderPrecisionFormat);
+
+  GLS_WAIT_SET_RET_PTR(ret, glGetShaderPrecisionFormat);
+
+  if (range != NULL) {
+    range[0] = ret->range[0];
+    range[1] = ret->range[1];
+  }
+  *precision = ret->precision;
+  GLS_RELEASE_RET();
 }
 
 
 GLS_DEF_CORE_API(void, glGetShaderSource, GLuint shader, GLsizei bufsize, GLsizei* length, GLchar* source)
 {
-  (void)shader; (void)bufsize; (void)length; (void)source;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetShaderSource);
+  c->shader = shader;
+  c->bufsize = bufsize;
+  GLS_SEND_PACKET(glGetShaderSource);
+
+  GLS_WAIT_SET_RET_PTR(ret, glGetShaderSource);
+  
+  if (ret->length > bufsize - 1) {
+    client_gles_error = GL_INVALID_VALUE;
+    GLS_RELEASE_RET();
+    return;
+  }
+
+  if (length != NULL)
+      *length = ret->length;
+
+  strncpy(source, ret->source, (size_t)bufsize);
+  source[ret->length] = '\0';
+  GLS_RELEASE_RET();
 }
 
 // glGetString (with caching)
@@ -1083,29 +1167,53 @@ GLS_DEF_CORE_API(const GLubyte*, glGetString, GLenum name)
 
 GLS_DEF_CORE_API(void, glGetTexParameterfv, GLenum target, GLenum pname, GLfloat* params)
 {
-  (void)target; (void)pname; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetTexParameterfv);
+  c->target = target;
+  c->pname = pname;
+  GLS_SEND_PACKET(glGetTexParameterfv);
+
+  GLS_WAIT_SET_RET_PTR(ret, glGetTexParameterfv);
+  *params = ret->params;
+  GLS_RELEASE_RET();
 }
 
 
 GLS_DEF_CORE_API(void, glGetTexParameteriv, GLenum target, GLenum pname, GLint* params)
 {
-  (void)target; (void)pname; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetTexParameteriv);
+  c->target = target;
+  c->pname = pname;
+  GLS_SEND_PACKET(glGetTexParameteriv);
+
+  GLS_WAIT_SET_RET_PTR(ret, glGetTexParameteriv);
+
+  if (params) {
+    *params = ret->params;
+  }
+  GLS_RELEASE_RET();
 }
 
 
 GLS_DEF_CORE_API(void, glGetUniformfv, GLuint program, GLint location, GLfloat* params)
 {
-  (void)program; (void)location; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetUniformfv);
+  c->program = program;
+  c->location = location;
+  GLS_SEND_PACKET(glGetUniformfv);
+
+  GLS_WAIT_SET_RET_PTR(ret, glGetUniformfv);
+  memcpy(params, ret->params, sizeof(ret->params));
+  GLS_RELEASE_RET();
 }
 
 
 GLS_DEF_CORE_API(void, glGetUniformiv, GLuint program, GLint location, GLint* params)
 {
-  (void)program; (void)location; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetUniformiv);
+  c->program = program;
+  c->location = location;
+  GLS_SEND_PACKET(glGetUniformiv);
+  GLS_WAIT_SET_RET_PTR(ret, glGetUniformiv); memcpy(params, ret->params, sizeof(ret->params)); GLS_RELEASE_RET();
 }
 
 
@@ -1132,22 +1240,45 @@ GLS_DEF_CORE_API(int, glGetUniformLocation, GLuint program, const GLchar* name)
 
 GLS_DEF_CORE_API(void, glGetVertexAttribfv, GLuint index, GLenum pname, GLfloat* params)
 {
-  (void)index; (void)pname; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetVertexAttribfv);
+  c->index = index;
+  c->pname = pname;
+  GLS_SEND_PACKET(glGetVertexAttribfv);
+
+  GLS_WAIT_SET_RET_PTR(ret, glGetVertexAttribfv);
+  *params = ret->params;
+  GLS_RELEASE_RET();
 }
 
 
 GLS_DEF_CORE_API(void, glGetVertexAttribiv, GLuint index, GLenum pname, GLint* params)
 {
-  (void)index; (void)pname; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetVertexAttribiv);
+  c->index = index;
+  c->pname = pname;
+  GLS_SEND_PACKET(glGetVertexAttribiv);
+
+  GLS_WAIT_SET_RET_PTR(ret, glGetVertexAttribiv);
+  *params = ret->params;
+  GLS_RELEASE_RET();
 }
 
 
 GLS_DEF_CORE_API(void, glGetVertexAttribPointerv, GLuint index, GLenum pname, GLvoid** pointer)
 {
-  (void)index; (void)pname; (void)pointer;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glGetVertexAttribPointerv);
+  c->index = index;
+  c->pname = pname;
+  GLS_SEND_PACKET(glGetVertexAttribPointerv);
+
+  GLS_WAIT_SET_RET_PTR(ret, glGetVertexAttribPointerv);
+
+  if (pname == GL_VERTEX_ATTRIB_ARRAY_POINTER) {
+    *pointer = (GLvoid*)(uintptr_t)ret->pointer;
+  } else {
+    LOGE("glGetVertexAttribPointerv called with unhandled pname 0x%x\n", pname);
+  }
+  GLS_RELEASE_RET();
 }
 
 
@@ -1182,41 +1313,56 @@ GLS_DEF_CORE_API(GLboolean, glIsEnabled, GLenum cap)
 
 GLS_DEF_CORE_API(GLboolean, glIsFramebuffer, GLuint framebuffer)
 {
-  (void)framebuffer;
-  WARN_STUBBED();
-  return FALSE;
+  GLS_SET_COMMAND_PTR(c, glIsFramebuffer);
+  c->framebuffer = framebuffer;
+  GLS_SEND_PACKET(glIsFramebuffer);
+
+  GLS_WAIT_SET_RET_PTR(ret, glIsFramebuffer);
+  GLS_RELEASE_RETURN_RET(GLboolean, ret, isframebuffer);
 }
 
 
 GLS_DEF_CORE_API(GLboolean, glIsProgram, GLuint program)
 {
-  (void)program;
-  WARN_STUBBED();
-  return FALSE;
+  GLS_SET_COMMAND_PTR(c, glIsProgram);
+  c->program = program;
+  GLS_SEND_PACKET(glIsProgram);
+
+  GLS_WAIT_SET_RET_PTR(ret, glIsProgram);
+  GLS_RELEASE_RETURN_RET(GLboolean, ret, isprogram);
 }
 
 
 GLS_DEF_CORE_API(GLboolean, glIsRenderbuffer, GLuint renderbuffer)
 {
-  (void)renderbuffer;
-  WARN_STUBBED();
-  return FALSE;
+  GLS_SET_COMMAND_PTR(c, glIsRenderbuffer);
+  c->renderbuffer = renderbuffer;
+  GLS_SEND_PACKET(glIsRenderbuffer);
+
+  GLS_WAIT_SET_RET_PTR(ret, glIsRenderbuffer);
+  GLS_RELEASE_RETURN_RET(GLboolean, ret, isrenderbuffer);
 }
 
 
 GLS_DEF_CORE_API(GLboolean, glIsShader, GLuint shader)
 {
-  (void)shader;
-  WARN_STUBBED();
-  return FALSE;
+  GLS_SET_COMMAND_PTR(c, glIsShader);
+  c->shader = shader;
+  GLS_SEND_PACKET(glIsShader);
+
+  GLS_WAIT_SET_RET_PTR(ret, glIsShader);
+  GLS_RELEASE_RETURN_RET(GLboolean, ret, isshader);
 }
 
 
 GLS_DEF_CORE_API(GLboolean, glIsTexture, GLuint texture)
 {
-  (void)texture;
-  WARN_STUBBED();
-  return FALSE;
+  GLS_SET_COMMAND_PTR(c, glIsTexture);
+  c->texture = texture;
+  GLS_SEND_PACKET(glIsTexture);
+
+  GLS_WAIT_SET_RET_PTR(ret, glIsTexture);
+  GLS_RELEASE_RETURN_RET(GLboolean, ret, istexture);
 }
 
 
@@ -1288,7 +1434,10 @@ GLS_DEF_CORE_API(void, glReadPixels, GLint x, GLint y, GLsizei width, GLsizei he
 
 GLS_DEF_CORE_API(void, glReleaseShaderCompiler, void)
 {
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glReleaseShaderCompiler);
+  GLS_SEND_PACKET(glReleaseShaderCompiler);
+  GLS_WAIT_NORET(glReleaseShaderCompiler);
+
 }
 
 
@@ -1305,22 +1454,43 @@ GLS_DEF_CORE_API(void, glRenderbufferStorage, GLenum target, GLenum internalform
 
 GLS_DEF_CORE_API(void, glSampleCoverage, GLclampf value, GLboolean invert)
 {
-  (void)value; (void)invert;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glSampleCoverage);
+  c->value = value;
+  c->invert = invert;
+    GLS_SEND_PACKET(glSampleCoverage);
+
 }
 
 
 GLS_DEF_CORE_API(void, glScissor, GLint x, GLint y, GLsizei width, GLsizei height)
 {
-  (void)x; (void)y; (void)width; (void)height;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glScissor);
+  c->x = x;
+  c->y = y;
+  c->width = width;
+  c->height = height;
+    GLS_SEND_PACKET(glScissor);
 }
 
 
 GLS_DEF_CORE_API(void, glShaderBinary, GLsizei n, const GLuint* shaders, GLenum binaryformat, const GLvoid* binary, GLsizei length)
 {
-  (void)n; (void)shaders; (void)binaryformat; (void)binary; (void)length;
-  WARN_STUBBED();
+    if (binary)
+        gls_cmd_send_data((uint32_t)length, (void*)binary);
+
+    _Static_assert(sizeof(GLuint) == sizeof(uint32_t), "int size mismatch");
+
+    uint32_t size = n * sizeof(uint32_t);
+    gls_cmd_send_data(size, (void*)shaders);
+
+    GLS_SET_COMMAND_PTR(c, glShaderBinary);
+    c->n = n;
+    c->binaryformat = binaryformat;
+    c->length = length;
+    c->has_binary = (binary != NULL);
+    GLS_SEND_PACKET(glShaderBinary);
+    GLS_WAIT_NORET(glShaderBinary);
+
 }
 
 
@@ -1383,8 +1553,13 @@ GLS_DEF_CORE_API(void, glStencilFunc, GLenum func, GLint r, GLuint m)
 
 GLS_DEF_CORE_API(void, glStencilFuncSeparate, GLenum face, GLenum func, GLint ref, GLuint mask)
 {
-  (void)face; (void)func; (void)ref; (void)mask;
-  WARN_STUBBED();
+    GLS_SET_COMMAND_PTR(c, glStencilFuncSeparate);
+    c->face = face;
+    c->func = func;
+    c->ref = ref;
+    c->mask = mask;
+    GLS_SEND_PACKET(glStencilFuncSeparate);
+    GLS_WAIT_NORET(glStencilFuncSeparate);
 }
 
 
@@ -1398,8 +1573,12 @@ GLS_DEF_CORE_API(void, glStencilMask, GLuint mask)
 
 GLS_DEF_CORE_API(void, glStencilMaskSeparate, GLenum face, GLuint mask)
 {
-  (void)face; (void)mask;
-  WARN_STUBBED();
+    GLS_SET_COMMAND_PTR(c, glStencilMaskSeparate);
+    c->face = face;
+    c->mask = mask;
+    GLS_SEND_PACKET(glStencilMaskSeparate);
+    GLS_WAIT_NORET(glStencilMaskSeparate);
+
 }
 
 
@@ -1415,8 +1594,13 @@ GLS_DEF_CORE_API(void, glStencilOp, GLenum fail, GLenum zfail, GLenum zpass)
 
 GLS_DEF_CORE_API(void, glStencilOpSeparate, GLenum face, GLenum fail, GLenum zfail, GLenum zpass)
 {
-  (void)face; (void)fail; (void)zfail; (void)zpass;
-  WARN_STUBBED();
+    GLS_SET_COMMAND_PTR(c, glStencilOpSeparate);
+    c->face = face;
+    c->fail = fail;
+    c->zfail = zfail;
+    c->zpass = zpass;
+    GLS_SEND_PACKET(glStencilOpSeparate);
+    GLS_WAIT_NORET(glStencilOpSeparate);
 }
 
 
@@ -1444,20 +1628,30 @@ GLS_DEF_CORE_API(void, glTexImage2D, GLenum target, GLint level, GLint internalf
 
 GLS_DEF_CORE_API(void, glTexParameterf, GLenum target, GLenum pname, GLfloat param)
 {
-  (void)target; (void)pname; (void)param;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glTexParameterf);
+  c->target = target;
+  c->pname = pname;
+  c->paramf = param;
+  GLS_SEND_PACKET(glTexParameterf);
+    GLS_WAIT_NORET(glTexParameterf);
 }
 
 
 GLS_DEF_CORE_API(void, glTexParameterfv, GLenum target, GLenum pname, const GLfloat* params)
 {
-  (void)target; (void)pname; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glTexParameterfv);
+  c->target = target;
+  c->pname = pname;
+  memcpy(c->paramsf, params, sizeof(c->paramsf));
+  GLS_SEND_PACKET(glTexParameterfv);
+    GLS_WAIT_NORET(glTexParameterfv);
 }
 
 
 GLS_DEF_CORE_API(void, glTexParameteri, GLenum target, GLenum pname, GLint param)
 {
+    
+
   GLS_SET_COMMAND_PTR(c, glTexParameteri);
   c->target = target;
   c->pname = pname;
@@ -1468,8 +1662,12 @@ GLS_DEF_CORE_API(void, glTexParameteri, GLenum target, GLenum pname, GLint param
 
 GLS_DEF_CORE_API(void, glTexParameteriv, GLenum target, GLenum pname, const GLint* params)
 {
-  (void)target; (void)pname; (void)params;
-  WARN_STUBBED();
+  GLS_SET_COMMAND_PTR(c, glTexParameteriv);
+  c->target = target;
+  c->pname = pname;
+  memcpy(c->paramsi, params, sizeof(c->paramsi));
+  GLS_SEND_PACKET(glTexParameteriv);
+    GLS_WAIT_NORET(glTexParameteriv);
 }
 
 
@@ -1561,11 +1759,13 @@ GLS_DEF_CORE_API(void, glUseProgram, GLuint program)
 }
 
 
-GLS_DEF_CORE_API(void, glValidateProgram, GLuint program)
-{
-  (void)program;
-  WARN_STUBBED();
+GLS_DEF_CORE_API(void, glValidateProgram, GLuint program){
+    GLS_SET_COMMAND_PTR(c, glValidateProgram);
+    c->program = program;
+    GLS_SEND_PACKET(glValidateProgram);
+    GLS_WAIT_NORET(glValidateProgram);
 }
+
 
 
 static void _glVertexAttribFloat(enum GL_Server_Command cmd,

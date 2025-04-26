@@ -200,6 +200,26 @@ typedef struct
   uint32_t shader;
 } gls_glCompileShader_t;
 
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  int32_t n;
+  uint32_t *shaders;
+} gls_glDeleteFramebuffers_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  int32_t n;
+  uint32_t *renderbuffers;
+} gls_glDeleteRenderbuffers_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  uint32_t *textures;
+} gls_glDeleteTextures_t;
+
 
 typedef struct
 {
@@ -590,6 +610,25 @@ typedef struct
   char params[GLS_STRING_SIZE_PLUS];
 } gls_ret_glGetString_t;
 
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  uint32_t target;
+  uint32_t pname;
+} gls_glGetTexParameterfv_t;
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  float params;
+} gls_ret_glGetTexParameterfv_t;
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  int32_t target;
+  uint32_t pname;
+} gls_glGetTexParameteriv_t;
+
+
 
 typedef struct
 {
@@ -690,10 +729,26 @@ typedef struct
 typedef struct
 {
   GLSCOMMAND_FIELDS();
+  uint32_t target;
+  uint32_t attachment;
+  uint32_t pname;
+} gls_glGetFramebufferAttachmentParameteriv_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
   int32_t target;
   int32_t internalformat;
   int32_t width;
   int32_t height;
+} gls_ret_glGetFramebufferAttachmentParameteriv_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  uint32_t target;
+  uint32_t pname;
+  int32_t params;
 } gls_glRenderbufferStorage_t;
 
 
@@ -709,6 +764,34 @@ typedef struct
   uint32_t offsets[GLS_STRING_SIZE_PLUS];
   int32_t length[GLS_STRING_SIZE_PLUS];
   char data[4];
+} gls_ret_glGetShaderSource_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  uint32_t count;
+  uint32_t maxcount;
+  uint32_t program;
+} gls_glGetAttachedShaders_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  uint32_t count;
+  uint32_t shaders[100];
+} gls_ret_glGetAttachedShaders_t;
+
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  int32_t shadertype;
+  int32_t precisiontype;
+} gls_glGetShaderPrecisionFormat_t;
+typedef struct{
+  GLSCOMMAND_FIELDS();
+  int32_t range[2];
+  int32_t precision;
 } gls_data_glShaderSource_t;
 
 
@@ -956,6 +1039,78 @@ typedef struct
   int64_t image;
 } gls_glEGLImageTargetRenderbufferStorageOES_t;
 
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  uint32_t program;
+  uint32_t index;
+  int32_t count;
+} gls_glDetachShader_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  uint32_t program;
+  uint32_t shader;
+} gls_glGetUniformfv_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  int32_t location;
+  int32_t count;
+  float params[];
+} gls_ret_glGetUniformfv_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  uint32_t program;
+  uint32_t shader;
+} gls_glGetUniformiv_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  int32_t location;
+  int32_t count;
+  int32_t params[];
+} gls_ret_glGetUniformiv_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  uint32_t program;
+  uint32_t index;
+} gls_glGetVertexAttribfv_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  float params[4];
+} gls_ret_glGetVertexAttribfv_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  uint32_t program;
+  uint32_t index;
+} gls_glGetVertexAttribiv_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  int32_t params[4];
+} gls_ret_glGetVertexAttribiv_t;
+
+typedef struct
+{
+  GLSCOMMAND_FIELDS();
+  int32_t index;
+  uint32_t pname;
+} gls_glGetVertexAttribPointerv_t;
+
+
 
 /*
 typedef struct
@@ -964,3 +1119,20 @@ typedef struct
   uint32_t ;
 } gls__t;
  */
+
+
+/*
+ * GLES 2.0 command list
+ */
+
+typedef enum GL_Server_Command {
+#define X(FUNC) GLSC_##FUNC,
+  GLS_GLES2_COMMAND_ENTRIES()
+#undef X
+  GLSC_COMMAND_COUNT
+} GL_Server_Command;
+
+
+static const char* GLSC_tostring(GL_Server_Command cmd) {
+  switch (cmd) {
+#define X(FUNC) case GLSC_##FUNC:

@@ -66,6 +66,12 @@ static void glse_glAttachShader(gls_command_t* buf)
   glAttachShader(c->program, c->shader);
 }
 
+static void glse_glGetAttachedShaders(gls_command_t* buf) {
+  GLSE_SET_COMMAND_PTR(c, glGetAttachedShaders);
+  GLSE_SET_RET_PTR(ret, glGetAttachedShaders);
+    glGetAttachedShaders(c->program, c->maxcount, &ret->count, (GLuint*)ret->shaders);
+    GLSE_SEND_RET(ret, glGetAttachedShaders);
+}
 
 static void glse_glBindAttribLocation(gls_command_t* buf)
 {
@@ -122,6 +128,38 @@ static void glse_glBlendFuncSeparate(gls_command_t* buf)
   glBlendFuncSeparate(c->srcRGB, c->dstRGB, c->srcAlpha, c->dstAlpha);
 }
 
+static void glse_glBlendEquation(gls_command_t* buf)
+{
+    GLSE_SET_COMMAND_PTR(c, glBlendEquation);
+    glBlendEquation(c->mode);
+}
+
+static void glse_glBlendColor(gls_command_t* buf)
+{
+    GLSE_SET_COMMAND_PTR(c, glBlendColor);
+    glBlendColor(c->red, c->green, c->blue, c->alpha);
+}
+
+static void glse_glCompressedTexImage2D(gls_command_t* buf)
+{
+    GLSE_SET_COMMAND_PTR(c, glCompressedTexImage2D);
+    GLSE_SET_RAWDATA_PTR(dat, void, c->has_data);
+    glCompressedTexImage2D(c->target, c->level, c->internalformat, c->width, c->height, c->border, c->imageSize, dat);
+    GLSE_RELEASE_DATA();
+
+}
+static void glse_glCompressedTexSubImage2D(gls_command_t* buf)
+{
+    GLSE_SET_COMMAND_PTR(c, glCompressedTexSubImage2D);
+    GLSE_SET_RAWDATA_PTR(dat, void, c->has_data);
+    glCompressedTexSubImage2D(c->target, c->level, c->xoffset, c->yoffset, c->width, c->height, 
+                               c->format, c->imageSize, dat);
+    GLSE_RELEASE_DATA();
+}
+
+
+
+
 
 static void glse_glBufferData(gls_command_t* buf)
 {
@@ -139,6 +177,190 @@ static void glse_glBufferSubData(gls_command_t* buf)
   glBufferSubData(c->target, c->offset, c->size, dat);
   GLSE_RELEASE_DATA();
 }
+
+static void glse_glCopyTexImage2D(gls_command_t* buf)
+{
+    GLSE_SET_COMMAND_PTR(c, glCopyTexImage2D);
+    glCopyTexImage2D(c->target, c->level, c->internalformat, c->x, c->y,
+                     c->width, c->height, c->border);
+}
+
+static void glse_glDetachShader(gls_command_t* buf)
+{
+    GLSE_SET_COMMAND_PTR(c, glDetachShader);
+    glDetachShader(c->program, c->shader);
+}
+
+static void glse_glFrontFace(gls_command_t* buf)
+{
+    GLSE_SET_COMMAND_PTR(c, glFrontFace);
+    glFrontFace(c->mode);
+}
+
+static void glse_glGetBooleanv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetBooleanv);
+  GLSE_SET_RET_PTR(ret, glGetBooleanv);
+  glGetBooleanv(c->pname, &ret->params);
+  GLSE_SEND_RET(ret, glGetBooleanv);
+}
+
+static void glse_glGetBufferParameteriv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetBufferParameteriv);
+  GLSE_SET_RET_PTR(ret, glGetBufferParameteriv);
+  glGetBufferParameteriv(c->target, c->pname, &ret->params);
+  GLSE_SEND_RET(ret, glGetBufferParameteriv);
+}
+
+static void glse_glGetFramebufferAttachmentParameteriv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetFramebufferAttachmentParameteriv);
+  GLSE_SET_RET_PTR(ret, glGetFramebufferAttachmentParameteriv);
+  glGetFramebufferAttachmentParameteriv(c->target, c->attachment, c->pname, &ret->params);
+  GLSE_SEND_RET(ret, glGetFramebufferAttachmentParameteriv);
+}
+
+static void glse_glGetRenderbufferParameteriv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetRenderbufferParameteriv);
+  GLSE_SET_RET_PTR(ret, glGetRenderbufferParameteriv);
+  glGetRenderbufferParameteriv(c->target, c->pname, &ret->params);
+  GLSE_SEND_RET(ret, glGetRenderbufferParameteriv);
+}
+
+
+static void glse_glGetShaderPrecisionFormat(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetShaderPrecisionFormat);
+  GLSE_SET_RET_PTR(ret, glGetShaderPrecisionFormat);
+  glGetShaderPrecisionFormat(c->shadertype, c->precisiontype, &ret->range[0],
+                             &ret->precision);
+  GLSE_SEND_RET(ret, glGetShaderPrecisionFormat);
+}
+
+static void glse_glGetShaderSource(gls_command_t* buf) {
+  GLSE_SET_COMMAND_PTR(c, glGetShaderSource);
+  GLSE_SET_RET_PTR(ret, glGetShaderSource);
+  int32_t maxsize = glsec_global.pool.out_buf.size - sizeof(gls_ret_glGetShaderSource_t);
+  if (c->bufsize > maxsize) {
+    LOGW("lowering %s buffer size to %u\n", __FUNCTION__, maxsize);
+    c->bufsize = maxsize;
+  }
+  glGetShaderSource(c->shader, c->bufsize, (GLsizei*)&ret->length, (GLchar*)ret->source);
+  GLSE_SEND_RAWRET(ret, sizeof(gls_ret_glGetShaderSource_t) + ret->length + 1);
+}
+
+static void glse_glGetTexParameterfv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetTexParameterfv);
+  GLSE_SET_RET_PTR(ret, glGetTexParameterfv);
+  glGetTexParameterfv(c->target, c->pname, &ret->params);
+  GLSE_SEND_RET(ret, glGetTexParameterfv);
+}
+
+static void glse_glGetTexParameteriv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetTexParameteriv);
+  GLSE_SET_RET_PTR(ret, glGetTexParameteriv);
+  glGetTexParameteriv(c->target, c->pname, &ret->params);
+  GLSE_SEND_RET(ret, glGetTexParameteriv);
+}
+
+static void glse_glGetUniformfv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetUniformfv);
+  GLSE_SET_RET_PTR(ret, glGetUniformfv);
+  glGetUniformfv(c->program, c->location, &ret->params);
+  GLSE_SEND_RET(ret, glGetUniformfv);
+}
+
+static void glse_glGetUniformiv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetUniformiv);
+  GLSE_SET_RET_PTR(ret, glGetUniformiv);
+  glGetUniformiv(c->program, c->location, &ret->params);
+  GLSE_SEND_RET(ret, glGetUniformiv);
+}
+
+static void glse_glGetVertexAttribfv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetVertexAttribfv);
+  GLSE_SET_RET_PTR(ret, glGetVertexAttribfv);
+  glGetVertexAttribfv(c->index, c->pname, &ret->params);
+  GLSE_SEND_RET(ret, glGetVertexAttribfv);
+}
+
+static void glse_glGetVertexAttribiv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetVertexAttribiv);
+  GLSE_SET_RET_PTR(ret, glGetVertexAttribiv);
+  glGetVertexAttribiv(c->index, c->pname, &ret->params);
+  GLSE_SEND_RET(ret, glGetVertexAttribiv);
+}
+
+static void glse_glGetVertexAttribPointerv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glGetVertexAttribPointerv);
+  GLSE_SET_RET_PTR(ret, glGetVertexAttribPointerv);
+  glGetVertexAttribPointerv(c->index, c->pname, &ret->pointer);
+  GLSE_SEND_RET(ret, glGetVertexAttribPointerv);
+}
+
+
+
+
+
+
+static void glse_glIsFramebuffer(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glIsFramebuffer);
+  GLSE_SET_RET_PTR(ret, glIsFramebuffer);
+  ret->isframebuffer = glIsFramebuffer(c->framebuffer);
+  GLSE_SEND_RET(ret, glIsFramebuffer);
+}
+
+static void glse_glIsProgram(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glIsProgram);
+  GLSE_SET_RET_PTR(ret, glIsProgram);
+  ret->isprogram = glIsProgram(c->program);
+  GLSE_SEND_RET(ret, glIsProgram);
+}
+
+static void glse_glIsRenderbuffer(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glIsRenderbuffer);
+  GLSE_SET_RET_PTR(ret, glIsRenderbuffer);
+  ret->isrenderbuffer = glIsRenderbuffer(c->renderbuffer);
+  GLSE_SEND_RET(ret, glIsRenderbuffer);
+}
+
+static void glse_glIsShader(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glIsShader);
+  GLSE_SET_RET_PTR(ret, glIsShader);
+  ret->isshader = glIsShader(c->shader);
+  GLSE_SEND_RET(ret, glIsShader);
+}
+
+static void glse_glIsTexture(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glIsTexture);
+  GLSE_SET_RET_PTR(ret, glIsTexture);
+  ret->istexture = glIsTexture(c->texture);
+  GLSE_SEND_RET(ret, glIsTexture);
+}
+
+
+
+
+
+
+
+
+
+
 
 
 static void glse_glCheckFramebufferStatus(gls_command_t* buf)
@@ -333,10 +555,59 @@ static void glse_glEnableVertexAttribArray(gls_command_t* buf)
 }
 
 
+static void glse_glReleaseShaderCompiler(gls_command_t* buf)
+{
+  (void)buf;
+  glReleaseShaderCompiler();
+}
+
+static void glse_glSampleCoverage(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glSampleCoverage);
+  glSampleCoverage(c->value, c->invert);
+}
+
+
+static void glse_glScissor(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glScissor);
+  glScissor(c->x, c->y, c->width, c->height);
+}
+
+
+static void glse_glShaderBinary(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glShaderBinary);
+  GLSE_SET_RAWDATA_PTR(dat, void, c->has_data);
+  glShaderBinary(c->count, c->shaders, c->binaryformat, dat, c->length);
+  GLSE_RELEASE_DATA();
+}
+
+
+static void glse_glStencilFuncSeparate(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glStencilFuncSeparate);
+  glStencilFuncSeparate(c->face, c->func, c->ref, c->mask);
+}
+
+static void glse_glStencilMaskSeparate(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glStencilMaskSeparate);
+  glStencilMaskSeparate(c->face, c->mask);
+}
+
+static void glse_glStencilOpSeparate(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c, glStencilOpSeparate);
+  glStencilOpSeparate(c->face, c->sfail, c->dpfail, c->dppass);
+}
+
+
+
 static void glse_glFinish(gls_command_t* buf)
 {
   (void)buf;
-  glFinish();
+    glFinish();
 }
 
 
@@ -511,6 +782,19 @@ static void glse_glGetShaderiv(gls_command_t* buf)
   glGetShaderiv(c->shader, c->pname, &ret->params);
   GLSE_SEND_RET(ret, glGetShaderiv);
 }
+static void glse_glGetAttachedShaders(gls_command_t* buf) {
+  GLSE_SET_COMMAND_PTR(c, glGetAttachedShaders);
+  GLSE_SET_RET_PTR(ret, glGetAttachedShaders);
+    int32_t maxsize = glsec_global.pool.out_buf.size - sizeof(gls_ret_glGetAttachedShaders_t);
+    if (c->maxcount > maxsize) {
+      LOGW("lowering %s buffer size to %u\n", __FUNCTION__, maxsize);
+      c->maxcount = maxsize;
+    }
+    glGetAttachedShaders(c->program, c->maxcount, &ret->count, (GLuint*)ret->shaders);
+    uint32_t size = sizeof(gls_ret_glGetAttachedShaders_t) + ret->count * sizeof(GLuint);
+    GLSE_SEND_RAWRET(ret, size);
+}
+
 
 
 // we can do complex computations from here, it will be called at most
@@ -704,6 +988,24 @@ static void glse_glStencilOp(gls_command_t* buf)
   glStencilOp(c->fail, c->zfail, c->zpass);
 }
 
+static void glse_glTexParameterf(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c,glTexParameterf);
+  glTexParameterf(c->target, c->pname, c->param);
+}
+
+static void glse_glTexParameterfv(gls_command_t* buf)
+{
+  GLSE_SET_COMMAND_PTR(c,glTexParameterfv);
+  glTexParameterfv(c->target, c->pname, (const GLfloat *)c->params);
+}
+
+static void glse_glTexParameteriv(gls_command_t* buf)
+{
+    GLSE_SET_COMMAND_PTR(c,glTexParameteriv);
+    glTexParameteriv(c->target, c->pname, (const GLint *)c->params);
+}
+
 
 static void glse_glTexParameteri(gls_command_t* buf)
 {
@@ -783,6 +1085,13 @@ static void glse_glUseProgram(gls_command_t* buf)
   GLSE_SET_COMMAND_PTR(c, glUseProgram);
   glUseProgram(c->program);
 }
+
+static void glse_glValidateProgram(gls_command_t* buf)
+{
+    GLSE_SET_COMMAND_PTR(c, glValidateProgram);
+    glValidateProgram(c->program);
+}
+
 
 
 static void glse_glVertexAttribFloat(gls_command_t* buf)
@@ -878,15 +1187,15 @@ int gles_executeCommand(gls_command_t* c)
   LOGD("gles_executeCommand: Executing command %d (%s)\n", c->cmd, GLSC_tostring(c->cmd));
 #endif
   switch (c->cmd) {
-    CASE_EXEC_CMD(glActiveTexture);
-    CASE_EXEC_CMD(glAttachShader);
+   CASE_EXEC_CMD(glActiveTexture);
+   CASE_EXEC_CMD(glAttachShader);
     CASE_EXEC_CMD(glBindAttribLocation);
     CASE_EXEC_CMD(glBindBuffer);
-    CASE_EXEC_CMD(glBindFramebuffer);
-    CASE_EXEC_CMD(glBindRenderbuffer);
+   CASE_EXEC_CMD(glBindFramebuffer);
+   CASE_EXEC_CMD(glBindRenderbuffer);
     CASE_EXEC_CMD(glBindTexture);
-    //CASE_EXEC_CMD(glBlendColor);
-    //CASE_EXEC_CMD(glBlendEquation);
+    CASE_EXEC_CMD(glBlendColor);
+    CASE_EXEC_CMD(glBlendEquation);
     CASE_EXEC_CMD(glBlendEquationSeparate);
     CASE_EXEC_CMD(glBlendFunc);
     CASE_EXEC_CMD(glBlendFuncSeparate);
@@ -899,9 +1208,9 @@ int gles_executeCommand(gls_command_t* c)
     CASE_EXEC_CMD(glClearStencil);
     CASE_EXEC_CMD(glColorMask);
     CASE_EXEC_CMD(glCompileShader);
-    //CASE_EXEC_CMD(glCompressedTexImage2D);
-    //CASE_EXEC_CMD(glCompressedTexSubImage2D);
-    //CASE_EXEC_CMD(glCopyTexImage2D);
+    CASE_EXEC_CMD(glCompressedTexImage2D);
+    CASE_EXEC_CMD(glCompressedTexSubImage2D);
+    CASE_EXEC_CMD(glCopyTexImage2D);
     CASE_EXEC_CMD(glCopyTexSubImage2D);
     CASE_EXEC_CMD(glCreateProgram);
     CASE_EXEC_CMD(glCreateShader);
@@ -915,7 +1224,7 @@ int gles_executeCommand(gls_command_t* c)
     CASE_EXEC_CMD(glDepthFunc);
     CASE_EXEC_CMD(glDepthMask);
     CASE_EXEC_CMD(glDepthRangef);
-    //CASE_EXEC_CMD(glDetachShader);
+    CASE_EXEC_CMD(glDetachShader);
     CASE_EXEC_CMD(glDisable);
     CASE_EXEC_CMD(glDisableVertexAttribArray);
     CASE_EXEC_CMD(glDrawArrays);
@@ -923,10 +1232,11 @@ int gles_executeCommand(gls_command_t* c)
     CASE_EXEC_CMD(glEnable);
     CASE_EXEC_CMD(glEnableVertexAttribArray);
     CASE_EXEC_CMD(glFinish);
+    CASE_EXEC_CMD(glReleaseShaderCompiler);
     CASE_EXEC_CMD(glFlush);
     CASE_EXEC_CMD(glFramebufferRenderbuffer);
     CASE_EXEC_CMD(glFramebufferTexture2D);
-    //CASE_EXEC_CMD(glFrontFace);
+    CASE_EXEC_CMD(glFrontFace);
     CASE_EXEC_CMD(glGenBuffers);
     CASE_EXEC_CMD(glGenerateMipmap);
     CASE_EXEC_CMD(glGenFramebuffers);
@@ -934,60 +1244,60 @@ int gles_executeCommand(gls_command_t* c)
     CASE_EXEC_CMD(glGenTextures);
     CASE_EXEC_CMD(glGetActiveAttrib);
     CASE_EXEC_CMD(glGetActiveUniform);
-    //CASE_EXEC_CMD(glGetAttachedShaders);
+    CASE_EXEC_CMD(glGetAttachedShaders);
     CASE_EXEC_CMD(glGetAttribLocation);
-    //CASE_EXEC_CMD(glGetBooleanv);
-    //CASE_EXEC_CMD(glGetBufferParameteriv);
+    CASE_EXEC_CMD(glGetBooleanv);
+    CASE_EXEC_CMD(glGetBufferParameteriv);
     CASE_EXEC_CMD(glGetError);
     CASE_EXEC_CMD(glGetFloatv);
-    //CASE_EXEC_CMD(glGetFramebufferAttachmentParameteriv);
     CASE_EXEC_CMD(glGetIntegerv);
     CASE_EXEC_CMD(glGetProgramiv);
     CASE_EXEC_CMD(glGetProgramInfoLog);
-    //CASE_EXEC_CMD(glGetRenderbufferParameteriv);
+    CASE_EXEC_CMD(glGetRenderbufferParameteriv);    
     CASE_EXEC_CMD(glGetShaderiv);
     CASE_EXEC_CMD(glGetShaderInfoLog);
-    //CASE_EXEC_CMD(glGetShaderPrecisionFormat);
-    //CASE_EXEC_CMD(glGetShaderSource);
+    CASE_EXEC_CMD(glGetShaderPrecisionFormat);
+    CASE_EXEC_CMD(glGetFramebufferAttachmentParameteriv);
+    CASE_EXEC_CMD(glGetShaderSource);
     CASE_EXEC_CMD(glGetString);
-    //CASE_EXEC_CMD(glGetTexParameterfv);
-    //CASE_EXEC_CMD(glGetTexParameteriv);
-    //CASE_EXEC_CMD(glGetUniformfv);
-    //CASE_EXEC_CMD(glGetUniformiv);
-    CASE_EXEC_CMD(glGetUniformLocation);
-    //CASE_EXEC_CMD(glGetVertexAttribfv);
-    //CASE_EXEC_CMD(glGetVertexAttribiv);
-    //CASE_EXEC_CMD(glGetVertexAttribPointerv);
+    CASE_EXEC_CMD(glGetTexParameteriv);
+    CASE_EXEC_CMD(glGetUniformfv);
+    CASE_EXEC_CMD(glGetTexParameterfv);
+
+   CASE_EXEC_CMD(glGetUniformLocation);
+    CASE_EXEC_CMD(glGetVertexAttribfv);
+    CASE_EXEC_CMD(glGetVertexAttribiv);
+    CASE_EXEC_CMD(glGetVertexAttribPointerv);
     CASE_EXEC_CMD(glHint);
     CASE_EXEC_CMD(glIsBuffer);
     CASE_EXEC_CMD(glIsEnabled);
-    //CASE_EXEC_CMD(glIsFramebuffer);
-    //CASE_EXEC_CMD(glIsProgram);
-    //CASE_EXEC_CMD(glIsRenderbuffer);
-    //CASE_EXEC_CMD(glIsShader);
-    //CASE_EXEC_CMD(glIsTexture);
+    CASE_EXEC_CMD(glIsFramebuffer);
+    CASE_EXEC_CMD(glIsProgram);
+    CASE_EXEC_CMD(glIsRenderbuffer);
+    CASE_EXEC_CMD(glIsShader);
+    CASE_EXEC_CMD(glIsTexture);
     CASE_EXEC_CMD(glLineWidth);
     CASE_EXEC_CMD(glLinkProgram);
     CASE_EXEC_CMD(glPixelStorei);
     CASE_EXEC_CMD(glPolygonOffset);
     CASE_EXEC_CMD(glReadPixels);
-    //CASE_EXEC_CMD(glReleaseShaderCompiler);
     CASE_EXEC_CMD(glRenderbufferStorage);
-    //CASE_EXEC_CMD(glSampleCoverage);
-    //CASE_EXEC_CMD(glScissor);
-    //CASE_EXEC_CMD(glShaderBinary);
+    CASE_EXEC_CMD(glSampleCoverage);
+    CASE_EXEC_CMD(glScissor);
     CASE_EXEC_CMD(glShaderSource);
     CASE_EXEC_CMD(glStencilFunc);
-    //CASE_EXEC_CMD(glStencilFuncSeparate);
+    CASE_EXEC_CMD(glStencilFuncSeparate);
     CASE_EXEC_CMD(glStencilMask);
-    //CASE_EXEC_CMD(glStencilMaskSeparate);
+    CASE_EXEC_CMD(glStencilMaskSeparate);
     CASE_EXEC_CMD(glStencilOp);
-    //CASE_EXEC_CMD(glStencilOpSeparate);
+    CASE_EXEC_CMD(glStencilOpSeparate);
     CASE_EXEC_CMD(glTexImage2D);
-    //CASE_EXEC_CMD(glTexParameterf);
-    //CASE_EXEC_CMD(glTexParameterfv);
-    CASE_EXEC_CMD(glTexParameteri);
-    //CASE_EXEC_CMD(glTexParameteriv);
+    CASE_EXEC_CMD(glTexParameterf);
+    CASE_EXEC_CMD(glShaderBinary);
+    CASE_EXEC_CMD(glTexParameterfv);
+   CASE_EXEC_CMD(glTexParameteri);
+  CASE_EXEC_CMD(glTexParameteriv);
+
     CASE_EXEC_CMD(glTexSubImage2D);
     CASE_EXEC_CMD(glUniform1f);
     CASE_EXEC_CMD(glUniform1fv);
@@ -1009,7 +1319,8 @@ int gles_executeCommand(gls_command_t* c)
     CASE_EXEC_CMD(glUniformMatrix3fv);
     CASE_EXEC_CMD(glUniformMatrix4fv);
     CASE_EXEC_CMD(glUseProgram);
-  //CASE_EXEC_CMD(glValidateProgram);
+    CASE_EXEC_CMD(glValidateProgram);
+    CASE_EXEC_CMD(glGetUniformiv);
 
   case GLSC_glVertexAttrib1f: glse_glVertexAttribFloat(c); break;
   case GLSC_glVertexAttrib2f: glse_glVertexAttribFloat(c); break;
@@ -1020,10 +1331,10 @@ int gles_executeCommand(gls_command_t* c)
   case GLSC_glVertexAttrib3fv: glse_glVertexAttribFloat(c); break;
   case GLSC_glVertexAttrib4fv: glse_glVertexAttribFloat(c); break;
 
-    CASE_EXEC_CMD(glVertexAttribPointer);
-    CASE_EXEC_CMD(glViewport);
+   CASE_EXEC_CMD(glVertexAttribPointer);
+   CASE_EXEC_CMD(glViewport);
 
-    // GL_OES_EGL_image
+   // GL_OES_EGL_image
     CASE_EXEC_CMD(glEGLImageTargetTexture2DOES);
     CASE_EXEC_CMD(glEGLImageTargetRenderbufferStorageOES);
   default:
